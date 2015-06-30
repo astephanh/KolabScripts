@@ -23,18 +23,6 @@ ldap_domain_name_attribute: associatedDomain
 ldap_domain_scope: sub
 ldap_domain_result_attribute: inetdomainbasedn" >> /etc/imapd.conf
 
-if [ 1 -eq 1 ]
-then
-# remove canonification
-sed -i \
-    -e 's/^auth_mech/#auth_mech/g' \
-    -e 's/^pts_module/#pts_module/g' \
-    -e 's/^ldap_/#ldap_/g' \
-    -e 's/auxprop saslauthd/saslauthd/' \
-    -e '/ptloader/d' \
-    /etc/cyrus.conf \
-    /etc/imapd.conf
-fi
 service cyrus-imapd restart
 
 #####################################################################################
@@ -81,6 +69,12 @@ sed -i -e "s#virtual_alias_maps.cf#virtual_alias_maps.cf, hash:$postfix_virtual_
 postmap $postfix_virtual_file
 
 service postfix restart
+
+#####################################################################################
+# roundcube multidomain log
+#####################################################################################
+patch -p1 -i `pwd`/patches/multiDomainLogin.patch -d /usr/share/php || exit 1
+
 
 #####################################################################################
 #kolab_auth conf roundcube; see https://git.kolab.org/roundcubemail-plugins-kolab/commit/?id=1778b5ec70156f064fdda61c817c678001406996
@@ -144,13 +138,14 @@ sed -r -i -e "s/\[cyrus-imap\]/[imap]\nvirtual_domains = userid\n\n[cyrus-imap]/
 if [[ $OS == CentOS* || $OS == Fedora* ]]
 then
   yum -y install php-pecl-memcache memcached
+  systemctl start memcached
+  systemctl enable memcached
 elif [[ $OS == Debian* || $OS == Ubuntu* ]]
 then
   apt-get -y install php5-memcache memcached
+  service memcached restart
 fi
 
-systemctl start memcached
-systemctl enable memcached
 sed -r -i -e "s#\[kolab_wap\]#[kolab_wap]\nmemcache_hosts = 127.0.0.1:11211\nmemcache_pconnect = true#g" /etc/kolab/kolab.conf
 
 #####################################################################################
