@@ -168,4 +168,9 @@ sed -i 's/sync_interval = 300/sync_interval = 30/ ; s/domain_sync_interval = 600
 # remove empty Theme
 [ -d /usr/share/roundcubemail/skins/kolab ] && rmdir /usr/share/roundcubemail/skins/kolab
 
+# Domain Deleting
+cp -a `pwd`/domain_delete.php	/usr/share/kolab-webadmin/lib 
+echo '0 * * * * root /usr/bin/php /usr/share/kolab-webadmin/lib/domain_delete.php > /var/log/kolab/domain_delete.log' > /etc/cron.d/kolab
+
+
 KolabService restart
