@@ -8,14 +8,11 @@ InstallWgetAndPatch
 DeterminePythonPath
 
 #####################################################################################
-#Removing Canonification from Cyrus IMAP
-# TODO: could preserve canonification: http://lists.kolab.org/pipermail/users/2012-August/013711.html
-# but that would mean that we need separate files for each domain...
+# ldap entries not needed anymore
 #####################################################################################
 cp -f /etc/imapd.conf /etc/imapd.conf.beforeMultiDomain
-#sed -i -e "s#ldap_base: .*#ldap_base: dc=%2,dc=%1#g" /etc/imapd.conf
-#sed -i -e "s#ldap_group_base: .*#ldap_group_base: dc=%2,dc=%1#g" /etc/imapd.conf
-#sed -i -e "s#ldap_member_base: .*#ldap_member_base: ou=People,dc=%2,dc=%1#g" /etc/imapd.conf
+#sed -i "/^ldap/d" /etc/imapd.conf
+
 
 echo "ldap_domain_base_dn: cn=kolab,cn=config
 ldap_domain_filter: (&(objectclass=domainrelatedobject)(associateddomain=%s))
@@ -70,28 +67,25 @@ postmap $postfix_virtual_file
 
 service postfix restart
 
-#####################################################################################
-# roundcube multidomain log
-#####################################################################################
-patch -p1 -i `pwd`/patches/multiDomainLogin3.4.patch -d /usr/share/php || exit 1
-
 
 #####################################################################################
 #kolab_auth conf roundcube: http://kodira.de/2014/11/kolab-3-3-multi-domain-setup-centos-7/
 # Fix Global Address Book in Multi Domain environment
 #####################################################################################
-cp -r /etc/roundcubemail/password.inc.php /etc/roundcubemail/password.inc.php.beforeMultiDomain
-cp -r /etc/roundcubemail/config.inc.php /etc/roundcubemail/config.inc.php.beforeMultiDomain
-cp -r /etc/roundcubemail/calendar.inc.php /etc/roundcubemail/calendar.inc.php.beforeMultiDomain
-cp -r /etc/roundcubemail/kolab_auth.inc.php /etc/roundcubemail/kolab_auth.inc.php.beforeMultiDomain
+cp -a /etc/roundcubemail/password.inc.php /etc/roundcubemail/password.inc.php.beforeMultiDomain
+cp -a /etc/roundcubemail/config.inc.php /etc/roundcubemail/config.inc.php.beforeMultiDomain
+cp -a /etc/roundcubemail/calendar.inc.php /etc/roundcubemail/calendar.inc.php.beforeMultiDomain
+cp -a /etc/roundcubemail/kolab_auth.inc.php /etc/roundcubemail/kolab_auth.inc.php.beforeMultiDomain
+cp -a /etc/roundcubemail/kolab_addressbook.inc.php /etc/roundcubemail/kolab_addressbook.inc.php.beforeMultiDomain
 
-sed -i "s/'ou=People,.*/'ou=People,%dc'/; \
-	s/'ou=Groups,.*/'ou=Groups,%dc'/; \
-	s/'ou=Resources,.*/'ou=Resources,%dc'/;" \
+sed -i "s/'ou=People,.*'/'ou=People,%dc'/; \
+	s/'ou=Groups,.*'/'ou=Groups,%dc'/; \
+	s/'ou=Resources,.*'/'ou=Resources,%dc'/;" \
 /etc/roundcubemail/password.inc.php \
 /etc/roundcubemail/calendar.inc.php \
 /etc/roundcubemail/config.inc.php \
-/etc/roundcubemail/kolab_auth.inc.php 
+/etc/roundcubemail/kolab_auth.inc.php \
+/etc/roundcubemail/kolab_addressbook.inc.php
 
 
 sed -r -i -e "s#=> 389,#=> 389,\n        'domain_base_dn'            => 'cn=kolab,cn=config',\n        'domain_filter'             => '(\&(objectclass=domainrelatedobject)(associateddomain=%s))',\n        'domain_name_attr'          => 'associateddomain',#g" /etc/roundcubemail/kolab_auth.inc.php
@@ -167,5 +161,11 @@ fi
 patch -p1 -i `pwd`/patches/validateAliasDomainPostfixVirtualFileBug2658.patch -d /usr/share/kolab-webadmin || exit -1
 
 service kolab-saslauthd restart
+
+# shorter sync time
+sed -i 's/sync_interval = 300/sync_interval = 30/ ; s/domain_sync_interval = 600/domain_sync_interval = 60/' /etc/kolab/kolab.conf
+
+# remove empty Theme
+[ -d /usr/share/roundcubemail/skins/kolab ] && rmdir /usr/share/roundcubemail/skins/kolab
 
 KolabService restart
