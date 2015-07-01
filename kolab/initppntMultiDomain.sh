@@ -13,9 +13,9 @@ DeterminePythonPath
 # but that would mean that we need separate files for each domain...
 #####################################################################################
 cp -f /etc/imapd.conf /etc/imapd.conf.beforeMultiDomain
-sed -i -e "s#ldap_base: .*#ldap_base: dc=%2,dc=%1#g" /etc/imapd.conf
-sed -i -e "s#ldap_group_base: .*#ldap_group_base: dc=%2,dc=%1#g" /etc/imapd.conf
-sed -i -e "s#ldap_member_base: .*#ldap_member_base: ou=People,dc=%2,dc=%1#g" /etc/imapd.conf
+#sed -i -e "s#ldap_base: .*#ldap_base: dc=%2,dc=%1#g" /etc/imapd.conf
+#sed -i -e "s#ldap_group_base: .*#ldap_group_base: dc=%2,dc=%1#g" /etc/imapd.conf
+#sed -i -e "s#ldap_member_base: .*#ldap_member_base: ou=People,dc=%2,dc=%1#g" /etc/imapd.conf
 
 echo "ldap_domain_base_dn: cn=kolab,cn=config
 ldap_domain_filter: (&(objectclass=domainrelatedobject)(associateddomain=%s))
@@ -77,18 +77,30 @@ patch -p1 -i `pwd`/patches/multiDomainLogin3.4.patch -d /usr/share/php || exit 1
 
 
 #####################################################################################
-#kolab_auth conf roundcube; see https://git.kolab.org/roundcubemail-plugins-kolab/commit/?id=1778b5ec70156f064fdda61c817c678001406996
+#kolab_auth conf roundcube: http://kodira.de/2014/11/kolab-3-3-multi-domain-setup-centos-7/
+# Fix Global Address Book in Multi Domain environment
 #####################################################################################
+cp -r /etc/roundcubemail/password.inc.php /etc/roundcubemail/password.inc.php.beforeMultiDomain
+cp -r /etc/roundcubemail/config.inc.php /etc/roundcubemail/config.inc.php.beforeMultiDomain
+cp -r /etc/roundcubemail/calendar.inc.php /etc/roundcubemail/calendar.inc.php.beforeMultiDomain
 cp -r /etc/roundcubemail/kolab_auth.inc.php /etc/roundcubemail/kolab_auth.inc.php.beforeMultiDomain
+
+sed -i "s/'ou=People,.*/'ou=People,%dc'/; \
+	s/'ou=Groups,.*/'ou=Groups,%dc'/; \
+	s/'ou=Resources,.*/'ou=Resources,%dc'/;" \
+/etc/roundcubemail/password.inc.php \
+/etc/roundcubemail/calendar.inc.php \
+/etc/roundcubemail/config.inc.php \
+/etc/roundcubemail/kolab_auth.inc.php 
+
+
 sed -r -i -e "s#=> 389,#=> 389,\n        'domain_base_dn'            => 'cn=kolab,cn=config',\n        'domain_filter'             => '(\&(objectclass=domainrelatedobject)(associateddomain=%s))',\n        'domain_name_attr'          => 'associateddomain',#g" /etc/roundcubemail/kolab_auth.inc.php
-sed -r -i -e "s#'ou=People,.*'#'ou=People,%dc'#g" /etc/roundcubemail/kolab_auth.inc.php
-sed -r -i -e "s#'ou=Groups,.*'#'ou=Groups,%dc'#g" /etc/roundcubemail/kolab_auth.inc.php
+
 
 #####################################################################################
 #fix a bug https://issues.kolab.org/show_bug.cgi?id=2673 
 #so that changing the password works in Roundcube for multiple domains
 #####################################################################################
-cp -r /etc/roundcubemail/password.inc.php /etc/roundcubemail/password.inc.php.beforeMultiDomain
 sed -r -i -e "s#config\['password_driver'\] = 'ldap'#config['password_driver'] = 'ldap_simple'#g" /etc/roundcubemail/password.inc.php
 
 #####################################################################################
@@ -108,13 +120,6 @@ sed -r -i -e 's#bind_dn = (.*)#bind_dn = "\1"#g' /usr/share/kolab-freebusy/confi
 sed -r -i -e "s#'quota': 0,##g" /etc/kolab/kolab.conf
 sed -r -i -e "s#'partition': 'archive'##g" /etc/kolab/kolab.conf
 
-#####################################################################################
-# Fix Global Address Book in Multi Domain environment
-####################################################################################
-cp -r /etc/roundcubemail/config.inc.php /etc/roundcubemail/config.inc.php.beforeMultiDomain
-sed -r -i -e "s#'ou=People,.*'#'ou=People,%dc'#g" /etc/roundcubemail/config.inc.php
-sed -r -i -e "s#'ou=Groups,.*'#'ou=Groups,%dc'#g" /etc/roundcubemail/config.inc.php
- 
 #####################################################################################
 #set primary_mail value in kolab section, so that new users in a different domain will have a proper primary email address, even without changing kolab.conf for each domain
 #####################################################################################
