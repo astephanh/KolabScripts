@@ -44,7 +44,7 @@ $_SESSION['user']->authenticate($username, $password, $domain);
 $domains = list_deleted_domains();
 
 if (empty($domains)) {
-    die("Nothing to delete. Done.");
+    die();
 }
 
 // delete domains
@@ -97,7 +97,7 @@ function delete_domain($domain_dn, $domain)
         return;
     }
 
-    echo "Deleting domain $domain_name... ";
+    echo  date('Y-m-d') . ": Deleting domain $domain_name... ";
 
     if (!empty($domain['inetdomainbasedn'])) {
         $inetdomainbasedn = $domain['inetdomainbasedn'];

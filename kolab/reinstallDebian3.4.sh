@@ -110,31 +110,31 @@ then
 fi
 
 cat > /etc/apt/sources.list.d/kolab.list <<FINISH
-deb $obs/Kolab:/3.3/$OBS_repo_OS/ ./
-deb $obs/Kolab:/3.3:/Updates/$OBS_repo_OS/ ./
 deb $obs/Kolab:/3.4/$OBS_repo_OS/ ./
 deb $obs/Kolab:/3.4:/Updates/$OBS_repo_OS/ ./
 deb $obs/Kolab:/Development/$OBS_repo_OS/ ./
+deb $obs/home:/tpokorra:/branches:/Kolab:/Development/$OBS_repo_OS/ ./
 FINISH
 
-wget $obs/Kolab:/3.3/$OBS_repo_OS/Release.key
-apt-key add Release.key; rm -rf Release.key
-wget $obs/Kolab:/3.3:/Updates/$OBS_repo_OS/Release.key
-apt-key add Release.key; rm -rf Release.key
 wget $obs/Kolab:/3.4/$OBS_repo_OS/Release.key
 apt-key add Release.key; rm -rf Release.key
 wget $obs/Kolab:/3.4:/Updates/$OBS_repo_OS/Release.key
 apt-key add Release.key; rm -rf Release.key
 
 cat > /etc/apt/preferences.d/kolab <<FINISH
+#
+# Nightly Dev Builds
+#
+Package: *
+Pin: release l=home:tpokorra:branches:Kolab:Development
+Pin-Priority: 301
+
+#
+# Main Repository
+#
 Package: *
 Pin: origin obs.kolabsys.com
 Pin-Priority: 501
-
-Package: 389-ds 389-ds-base 389-ds-base-libs
-Pin: origin obs.kolabsys.com
-Pin-Priority: 501
-Pin: version 1.2.11.29-0
 FINISH
 
 apt-get -y install apt-transport-https
