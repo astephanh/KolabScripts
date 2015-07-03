@@ -120,6 +120,9 @@ wget $obs/Kolab:/3.4/$OBS_repo_OS/Release.key
 apt-key add Release.key; rm -rf Release.key
 wget $obs/Kolab:/3.4:/Updates/$OBS_repo_OS/Release.key
 apt-key add Release.key; rm -rf Release.key
+wget $obs/home:/tpokorra:/branches:/Kolab:/Development/$OBS_repo_OS/Release.key
+apt-key add Release.key; rm -rf Release.key
+
 
 cat > /etc/apt/preferences.d/kolab <<FINISH
 #
