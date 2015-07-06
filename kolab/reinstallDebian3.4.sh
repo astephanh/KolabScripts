@@ -128,6 +128,11 @@ cat > /etc/apt/preferences.d/kolab <<FINISH
 #
 # Nightly Dev Builds
 #
+
+Package: php-kolab libkolab0 python-kolab
+Pin: release l=home:tpokorra:branches:Kolab:Development
+Pin-Priority: 501
+
 Package: *
 Pin: release l=home:tpokorra:branches:Kolab:Development
 Pin-Priority: 301
@@ -152,6 +157,10 @@ fi
 
 aptitude -y install kolab kolab-freebusy
 
+# DEBIAN APACHE RELOAD BUG
+#echo 'export ZEND_DONT_UNLOAD_MODULES=1' >> /etc/apache2/envvars
+#sed -i  'i extension=dummy.so' /etc/php5/apache2/conf.d/30-kolabformat.ini
+#sed -i 's/.*extension=dummy.so/;extension=dummy.so/' /etc/php5/apache2/conf.d/31-kolab.ini
 
 # set path top ldap tools
 echo 'export PATH=$PATH:/usr/lib/mozldap' > /etc/profile.d/kolab.sh
