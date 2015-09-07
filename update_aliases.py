@@ -22,12 +22,13 @@ with open(alias_file) as f:
 new_aliases = copy.copy(old_aliases)
 
 # get all domains
-cmd = "kolab list-domains | grep '^[^ ]'"
+cmd = "/usr/sbin/kolab list-domains | grep '^[^ ]'"
 p = Popen(cmd , shell=True, stdout=PIPE, stderr=PIPE)
 out, err = p.communicate()
 domains = out.rstrip().splitlines()
-if not domains[0].find('Primary') == 0:
+if len(domains) == 0 or domains[0].find('Primary') == -1:
   print "getting domains failed"
+  print out,err
   sys.exit(1)
 domains = domains[1:]
 
