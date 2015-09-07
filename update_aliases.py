@@ -69,5 +69,5 @@ if not new_aliases == old_aliases:
   for line in new_aliases:
     f.write("%s\n" % line)
   f.close()
-  os.system('postmap %s' % alias_file)
+  os.system('/usr/sbin/postmap %s' % alias_file)
 
