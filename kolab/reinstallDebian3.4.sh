@@ -140,6 +140,11 @@ Pin-Priority: 301
 #
 # Main Repository
 #
+
+Package: irony 
+Pin: release l=obs://Kolab/Kolab:3.4/Debian_7.0
+Pin-Priority: 501
+
 Package: *
 Pin: origin obs.kolabsys.com
 Pin-Priority: 501
